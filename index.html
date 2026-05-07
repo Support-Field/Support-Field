@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="SupportField: 3D scene diffusion exposes a support-normal repair field, but variance and branch risk do not become physics oracles.">
+  <meta name="keywords" content="diffusion models, 3D scene synthesis, support manifold, denoising field, physical plausibility, DiffuScene, 3D-FRONT">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>SupportField: Denoising as Support-Manifold Repair</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+
+
+<!-- Hero / Title -->
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-2 publication-title">
+            Denoising as Support-Manifold Repair:<br>
+            What 3D Scene Diffusion Exposes and What It Does Not
+          </h1>
+          <p class="subtitle is-5" style="margin-top: 0.5rem; color: #5a5a5a;">
+            Project alias: <strong>SupportField</strong>
+          </p>
+
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">Anonymous Author(s)</span>
+          </div>
+
+          <div class="is-size-6 has-text-centered" style="margin-top: 0.4rem; color: #6b6b6b;">
+            Under double-blind review at NeurIPS 2026
+          </div>
+
+          <div class="publication-links has-text-centered">
+            <span class="link-block">
+              <a href="https://anonymous.4open.science/r/Support-Field-3D35" target="_blank" rel="noopener"
+                 class="external-link button is-normal is-rounded is-dark">
+                <span class="icon"><i class="fas fa-code"></i></span>
+                <span>Anonymous Code</span>
+              </a>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- TL;DR -->
+<section class="section hero is-light" style="padding-top: 2rem; padding-bottom: 2rem;">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-4">TL;DR</h2>
+        <div class="content has-text-justified">
+          <p>
+            Inside a trained 3D scene diffusion model, <em>floor support</em>
+            is exposed as a low-noise denoising field that contracts toward
+            the empirical support manifold:
+            <em>&Delta;g &asymp; &minus;&lambda;<sub>t</sub> g</em> with
+            <em>&lambda;<sub>t</sub> &asymp; 1</em>. The same model's
+            object-marginal variance, branch variance, branch risk, and
+            tested first-order relational readouts do <em>not</em> become
+            physics oracles. The result is a limited but actionable
+            taxonomy: representation-aligned object-local physics appears
+            as score-field geometry; relational and mesh-level physics does
+            not.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- Headline numbers -->
+<section class="section" style="padding-top: 1.5rem; padding-bottom: 0;">
+  <div class="container is-max-desktop">
+    <div class="numbers-row">
+      <div class="number-card">
+        <div class="num">98.8&ndash;99.6%</div>
+        <div class="num-sub">processed-layout objects within 1&nbsp;cm of the support manifold (3 room types)</div>
+      </div>
+      <div class="number-card">
+        <div class="num">1.000</div>
+        <div class="num-sub">support-normal repair PairAcc with the low-noise <em>x&#770;<sub>0</sub></em> readout</div>
+      </div>
+      <div class="number-card">
+        <div class="num">&lambda; &asymp; 1</div>
+        <div class="num-sub">fitted contraction slope in <em>&Delta;g &asymp; &minus;&lambda;<sub>t</sub> g</em>, low-noise regime</div>
+      </div>
+      <div class="number-card">
+        <div class="num">~ 0.50</div>
+        <div class="num-sub">window / final branch-variance PairAcc &mdash; near chance, no physics signal</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- Abstract -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            3D scene diffusion models are trained on furnished-room layouts
+            whose geometry encodes simple physical regularities. We ask not
+            merely whether such regularities are present in the model, but
+            <em>where</em> they are exposed in the reverse denoising process.
+            We compare three candidate internal readouts: passive
+            object-marginal uncertainty, branch risk, and local denoising
+            response. The result is a sharp separation. For the tested 3D
+            scene violations, empirical marginal/branch variance and branch
+            risk are not reliable or parameterization-stable physical
+            plausibility readouts, and the tested first-order relational
+            readouts do not yield practical invalid-vs-control readouts for
+            collision or scale-overlap.
+          </p>
+          <p>
+            In contrast, floor support is exposed directly by the
+            deterministic low-noise <em>x&#770;<sub>0</sub></em> field:
+            under controlled support stress,
+            <em>x&#770;<sub>0</sub></em> behaves like a learned local
+            projector onto the empirical support manifold
+            <em>g = c<sub>y</sub> &minus; h/2 &minus; y<sub>floor</sub> = 0</em>.
+            Across bedroom, livingroom, and diningroom DiffuScene
+            checkpoints, including strict-valid layouts sampled from the
+            model itself, the response localizes the perturbed object,
+            aligns with the repair direction, scales with violation
+            severity, and follows
+            <em>&Delta;g &asymp; &minus;&lambda;<sub>t</sub> g</em> with
+            <em>&lambda;<sub>t</sub> &asymp; 1</em>. These findings give a
+            limited but actionable taxonomy of implicit scene physics:
+            representation-aligned object-local support appears as
+            score-field geometry, while empirical variance, branch risk, and
+            tested first-order relational readouts do not yield a general
+            physics oracle.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- Main figure: support manifold repair -->
+<section class="section" style="padding-top: 0;">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">The Low-Noise <em>x&#770;<sub>0</sub></em> Field Contracts Toward the Support Manifold</h2>
+    <figure class="image">
+      <img src="static/images/figure1_support_manifold_repair.png"
+           alt="Four-panel figure: support coordinate definition, empirical support concentration, contraction response, and fitted slope across timesteps and room types."
+           style="max-width: 100%; height: auto;">
+    </figure>
+    <p class="figure-caption">
+      <strong>(a)</strong> Floor-support coordinate
+      <em>g = c<sub>y</sub> &minus; h/2 &minus; y<sub>floor</sub></em>;
+      normal lifts move objects off the manifold (<em>g &gt; 0</em>),
+      tangent controls preserve <em>g = 0</em>, downward penetration tests
+      the opposite sign.
+      <strong>(b)</strong> Processed 3D-FRONT layouts concentrate sharply
+      near <em>g = 0</em> across bedroom, livingroom, and diningroom; legend
+      reports the fraction of non-wall-mounted objects with
+      <em>|g|&nbsp;&le;&nbsp;1&nbsp;cm</em>.
+      <strong>(c)</strong> Under controlled support stress, the single-step
+      <em>x&#770;<sub>0</sub></em> response follows
+      <em>&Delta;g &asymp; &minus;&lambda;<sub>t</sub> g</em>: floating
+      gaps are pulled down, penetration gaps are pushed up, and valid
+      controls stay near zero.
+      <strong>(d)</strong> The fitted contraction coefficient
+      <em>&lambda;<sub>t</sub></em> stays near the ideal projector value
+      of 1 in the low-noise regime across room types.
+    </p>
+    <div class="takeaway">
+      <strong>Takeaway.</strong> Floor support is exposed as score-field
+      geometry &mdash; the low-noise denoising field acts like a learned
+      local projector onto the empirical support manifold.
+    </div>
+  </div>
+</section>
+
+
+<!-- Matched controls -->
+<section class="section" style="padding-top: 0;">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Matched Controls Rule Out the Simplest Confounds</h2>
+    <figure class="image">
+      <img src="static/images/figure3_control_matrix.png"
+           alt="Control matrix showing accuracy, repair, localization, and severity monotonicity for normal/tangent, downward, and model-space horizontal controls."
+           style="max-width: 100%; height: auto;">
+    </figure>
+    <p class="figure-caption">
+      At representative low-noise time <em>t = 25</em>, normal/tangent
+      controls, downward penetration, and a model-space norm-matched
+      horizontal control all preserve strong response, support-normal
+      repair, localization, and severity monotonicity. The tangent
+      condition rules out a pure vertical-coordinate prior; the downward
+      condition verifies the field can push <em>upward</em> when
+      <em>g &lt; 0</em>; the model-space control separates support repair
+      from generic perturbation magnitude.
+    </p>
+  </div>
+</section>
+
+
+<!-- Readout comparison: variance vs. response -->
+<section class="section" style="padding-top: 0;">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Variance and Branch Risk Are <em>Not</em> the Carrier</h2>
+    <figure class="image">
+      <img src="static/images/figure2_readout_comparison.png"
+           alt="Readout comparison across denoising timesteps. The x0-hat support-normal repair stays near 1 in the low-noise regime; window and final branch variance stay near paired chance."
+           style="max-width: 100%; height: auto;">
+    </figure>
+    <p class="figure-caption">
+      Curves average matched support-control families. The
+      <em>x&#770;<sub>0</sub></em> support-normal repair readout remains
+      saturated in the low-noise regime, while window and final branch
+      variance stay near 0.5 (paired chance). Branch target-risk reaches
+      only 0.000&ndash;0.028 PairAcc in matched runs.
+    </p>
+    <div class="takeaway">
+      <strong>Takeaway.</strong> The physical signal is the deterministic
+      denoising mean field / <em>x&#770;<sub>0</sub></em>, not sampled
+      trajectory variance or branch risk. Empirical uncertainty is
+      <em>not</em> a general physics oracle in this setting.
+    </div>
+  </div>
+</section>
+
+
+<!-- Cross-room generated replication -->
+<section class="section" style="padding-top: 0;">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Replicates on the Model's Own Generated Layouts</h2>
+    <figure class="image">
+      <img src="static/images/generated_x0hat_gap_contraction_by_t.png"
+           alt="Generated-layout contraction curves: bedroom, livingroom, and diningroom, all near the ideal projector slope."
+           style="max-width: 100%; height: auto;">
+    </figure>
+    <p class="figure-caption">
+      The support-normal contraction also appears around <em>strict-valid
+      layouts sampled from the model itself</em>. Across generated
+      bedroom, livingroom, and diningroom layouts, the low-noise
+      <em>x&#770;<sub>0</sub></em> response remains close to the ideal
+      projector. (Generated layouts have no original 3D-FRONT room mask,
+      so strict-valid filtering uses a rectangular-room fallback; this is
+      a neighborhood check around model samples, not a replacement for
+      real room-mask evaluation.)
+    </p>
+  </div>
+</section>
+
+
+<!-- Qualitative support stress -->
+<section class="section" style="padding-top: 0;">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Qualitative Stress Protocol</h2>
+    <figure class="image">
+      <img src="static/images/qualitative_support_stress.png"
+           alt="Side-view of a real 3D-FRONT bedroom under matched normal lift, x0-hat repair direction, and tangent valid control."
+           style="max-width: 100%; height: auto;">
+    </figure>
+    <p class="figure-caption">
+      A real strict-valid 3D-FRONT bedroom layout with the perturbed
+      object highlighted (left). Side-view panels show the matched normal
+      lift, the low-noise <em>x&#770;<sub>0</sub></em> support-normal
+      repair direction, and the tangent valid control that changes
+      vertical coordinates while preserving <em>g = 0</em>.
+    </p>
+  </div>
+</section>
+
+
+<!-- Bottom-gap distribution (extra empirical) -->
+<section class="section" style="padding-top: 0;">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">The Support Manifold Is Sharp Empirically</h2>
+    <figure class="image">
+      <img src="static/images/bottom_gap_distribution_bedroom.png"
+           alt="Empirical bottom-gap distribution on processed 3D-FRONT bedroom layouts, with mass concentrated within 1cm of zero."
+           style="max-width: 78%; height: auto; display: block; margin: 0 auto;">
+    </figure>
+    <p class="figure-caption">
+      Empirical bottom-gap <em>g</em> distribution on processed 3D-FRONT
+      bedroom layouts. Mass concentrates within 1&nbsp;cm of zero,
+      consistent with a sharp data manifold and with the
+      <em>p(g)</em>-Gaussian local-score interpretation of the
+      contraction law.
+    </p>
+  </div>
+</section>
+
+
+<!-- Contributions -->
+<section class="section hero is-light">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Contributions</h2>
+    <div class="content">
+      <ul>
+        <li><strong>C1.</strong> A support-manifold repair field:
+          floor support is exposed as a low-noise
+          <em>x&#770;<sub>0</sub></em> support-normal contraction field,
+          <em>&Delta;g &asymp; &minus;&lambda;<sub>t</sub> g</em>, on
+          processed and generated DiffuScene layouts.</li>
+        <li><strong>C2.</strong> Counterfactual support stress tests
+          (normal/tangent, downward penetration, model-space norm
+          control) separate support repair from vertical-OOD bias,
+          one-way downward pulls, reconstruction bias, and generic
+          perturbation magnitude.</li>
+        <li><strong>C3.</strong> Readout separation: passive marginal
+          variance, branch variance, and branch risk do <em>not</em>
+          carry the controlled support signal; the deterministic
+          <em>x&#770;<sub>0</sub></em> denoising field does. Tested
+          first-order relational readouts also fail for collision and
+          scale-overlap.</li>
+        <li><strong>C4.</strong> Boundary taxonomy: implicit scene
+          physics is structured and limited, not a universal denoising
+          oracle &mdash; choose denoising-field diagnostics for
+          representation-aligned constraints, and keep external
+          geometry / simulation / collision-detection for relational
+          and mesh-level constraints.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+
+<!-- BibTeX -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">BibTeX</h2>
+    <pre class="bibtex-block"><code>@inproceedings{anonymous2026supportfield,
+  title     = {Denoising as Support-Manifold Repair: What 3D Scene
+               Diffusion Exposes and What It Does Not},
+  author    = {Anonymous Author(s)},
+  booktitle = {Submitted to the Annual Conference on
+               Neural Information Processing Systems (NeurIPS)},
+  year      = {2026},
+  note      = {Under double-blind review}
+}</code></pre>
+  </div>
+</section>
+
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container is-max-desktop has-text-centered">
+    <p>
+      Page template adapted from the
+      <a href="https://github.com/eliahuhorwitz/Academic-project-page-template" target="_blank" rel="noopener">Academic Project Page Template</a>
+      and the <a href="https://nerfies.github.io/" target="_blank" rel="noopener">Nerfies</a> page.
+      This page is anonymized for double-blind review.
+    </p>
+  </div>
+</footer>
+
+
+</body>
+</html>
